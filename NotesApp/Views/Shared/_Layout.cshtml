@@ -32,6 +32,9 @@
                                 <span class="nav-link text-dark">@User.Identity.Name</span>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link text-danger" asp-controller="Account" asp-action="Delete">Zrušit účet</a>
+                            </li>
+                            <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-link nav-link text-dark">Odhlásit se</button>
