@@ -14,6 +14,8 @@ public class Note
     [MaxLength(4000)]
     public string Content { get; set; } = string.Empty;
 
+    public bool IsImportant { get; set; }
+
     public DateTime CreatedAtUtc { get; set; }
 
     [Required]

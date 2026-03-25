@@ -21,7 +21,7 @@ public class NotesController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(bool importantOnly = false)
     {
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrWhiteSpace(userId))
@@ -29,14 +29,20 @@ public class NotesController : Controller
             return Challenge();
         }
 
-        var notes = await _dbContext.Notes
-            .Where(n => n.UserId == userId)
+        var notesQuery = _dbContext.Notes.Where(n => n.UserId == userId);
+        if (importantOnly)
+        {
+            notesQuery = notesQuery.Where(n => n.IsImportant);
+        }
+
+        var notes = await notesQuery
             .OrderByDescending(n => n.CreatedAtUtc)
             .ToListAsync();
 
         var viewModel = new NotesIndexViewModel
         {
-            Notes = notes
+            Notes = notes,
+            ShowImportantOnly = importantOnly
         };
 
         return View(viewModel);
@@ -54,8 +60,13 @@ public class NotesController : Controller
 
         if (!ModelState.IsValid)
         {
-            model.Notes = await _dbContext.Notes
-                .Where(n => n.UserId == userId)
+            var notesQuery = _dbContext.Notes.Where(n => n.UserId == userId);
+            if (model.ShowImportantOnly)
+            {
+                notesQuery = notesQuery.Where(n => n.IsImportant);
+            }
+
+            model.Notes = await notesQuery
                 .OrderByDescending(n => n.CreatedAtUtc)
                 .ToListAsync();
             return View("Index", model);
@@ -72,12 +83,12 @@ public class NotesController : Controller
         _dbContext.Notes.Add(note);
         await _dbContext.SaveChangesAsync();
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { importantOnly = model.ShowImportantOnly });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, bool importantOnly = false)
     {
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrWhiteSpace(userId))
@@ -94,6 +105,28 @@ public class NotesController : Controller
         _dbContext.Notes.Remove(note);
         await _dbContext.SaveChangesAsync();
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { importantOnly });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleImportant(int id, bool importantOnly = false)
+    {
+        var userId = _userManager.GetUserId(User);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var note = await _dbContext.Notes.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+        if (note is null)
+        {
+            return NotFound();
+        }
+
+        note.IsImportant = !note.IsImportant;
+        await _dbContext.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index), new { importantOnly });
     }
 }

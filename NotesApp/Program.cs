@@ -36,6 +36,34 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.EnsureCreated();
+
+    if (dbContext.Database.IsSqlite())
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            connection.Open();
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info('Notes');";
+        using var reader = command.ExecuteReader();
+
+        var hasIsImportantColumn = false;
+        while (reader.Read())
+        {
+            if (string.Equals(reader.GetString(1), "IsImportant", StringComparison.OrdinalIgnoreCase))
+            {
+                hasIsImportantColumn = true;
+                break;
+            }
+        }
+
+        if (!hasIsImportantColumn)
+        {
+            dbContext.Database.ExecuteSqlRaw("ALTER TABLE Notes ADD COLUMN IsImportant INTEGER NOT NULL DEFAULT 0;");
+        }
+    }
 }
 
 // Configure the HTTP request pipeline.
