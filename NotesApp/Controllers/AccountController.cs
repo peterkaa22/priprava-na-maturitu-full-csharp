@@ -61,6 +61,7 @@ public class AccountController : Controller
         }
 
         await _signInManager.SignInAsync(user, isPersistent: false);
+        TempData["SuccessMessage"] = "Registrace proběhla úspěšně.";
         return RedirectToAction("Index", "Home");
     }
 
@@ -96,9 +97,11 @@ public class AccountController : Controller
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
+            TempData["SuccessMessage"] = "Přihlášení proběhlo úspěšně.";
             return Redirect(returnUrl);
         }
 
+        TempData["SuccessMessage"] = "Přihlášení proběhlo úspěšně.";
         return RedirectToAction("Index", "Home");
     }
 
@@ -108,6 +111,7 @@ public class AccountController : Controller
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
+        TempData["SuccessMessage"] = "Byl jsi odhlášen.";
         return RedirectToAction("Index", "Home");
     }
 
@@ -164,6 +168,7 @@ public class AccountController : Controller
         }
 
         await _signInManager.SignOutAsync();
+        TempData["SuccessMessage"] = "Účet byl trvale zrušen.";
         return RedirectToAction("Index", "Home");
     }
 }

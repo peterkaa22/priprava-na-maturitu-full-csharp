@@ -83,6 +83,8 @@ public class NotesController : Controller
         _dbContext.Notes.Add(note);
         await _dbContext.SaveChangesAsync();
 
+        TempData["SuccessMessage"] = "Poznámka byla uložena.";
+
         return RedirectToAction(nameof(Index), new { importantOnly = model.ShowImportantOnly });
     }
 
@@ -105,6 +107,8 @@ public class NotesController : Controller
         _dbContext.Notes.Remove(note);
         await _dbContext.SaveChangesAsync();
 
+        TempData["SuccessMessage"] = "Poznámka byla smazána.";
+
         return RedirectToAction(nameof(Index), new { importantOnly });
     }
 
@@ -126,6 +130,10 @@ public class NotesController : Controller
 
         note.IsImportant = !note.IsImportant;
         await _dbContext.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = note.IsImportant
+            ? "Poznámka byla označena jako důležitá."
+            : "Označení důležitosti bylo zrušeno.";
 
         return RedirectToAction(nameof(Index), new { importantOnly });
     }
